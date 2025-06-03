@@ -9,7 +9,7 @@ const useApi = (baseUrl, defaultHeaders = {}) => {
     const options = {
       method,
       headers: {
-        // 'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
         ...defaultHeaders,
         ...headers
       }

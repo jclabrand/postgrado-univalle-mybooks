@@ -13,21 +13,12 @@ const useBooksApi = () => {
   
   const getBookById = (id) => api.get(`/books/${id}`);
   
-  const createBook = (bookData) => api.post('/books', bookData);
-  
-  const updateBook = (id, bookData) => api.put(`/books/${id}`, bookData);
-  
-  const deleteBook = (id) => api.delete(`/books/${id}`);
-  
-  const searchBooks = (query) => api.get(`/search?q=${encodeURIComponent(query)}`);
+  const searchBooks = (query) => api.post('/search', { query });
   
   return {
     ...api, // Incluimos todas las propiedades y métodos del hook base
     getAllBooks,
     getBookById,
-    createBook,
-    updateBook,
-    deleteBook,
     searchBooks
   };
 };
