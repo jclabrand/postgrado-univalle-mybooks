@@ -1,24 +1,24 @@
-import React, { useEffect } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, FlatList, StyleSheet, ActivityIndicator, Image, TextInput } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import useBooksApi from '../../hooks/useBooksApi';
 
 export default function LibraryScreen() {
-  const { loading, error, data, getAllBooks } = useBooksApi();
-  
+  const { loading, error, data, getAllBooks, searchBooks } = useBooksApi();
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
-    getAllBooks();
-  }, []);
-  
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Cargando libros...</Text>
-      </View>
-    );
-  }
-  
+    const query = searchQuery.toLowerCase().trim();
+
+    if (query.length < 3) {
+      getAllBooks();
+      return;
+    }
+
+    searchBooks(query)
+
+  }, [searchQuery]);
+
   if (error) {
     return (
       <View style={styles.centered}>
@@ -27,9 +27,23 @@ export default function LibraryScreen() {
       </View>
     );
   }
-  
+
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Buscar libros..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      {
+        loading && (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color="#0000ff" />
+            <Text>Cargando libros...</Text>
+          </View>
+        )
+      }
       {data && data.books && data.books.length > 0 ? (
         <FlatList
           data={data.books}
@@ -40,7 +54,7 @@ export default function LibraryScreen() {
               <Image source={{ uri: item.imageLinks.thumbnail }} style={styles.bookImage} />
               <Text style={styles.title}>{item.title}</Text>
               {
-                item.authors.map((author, index) => (
+                item.authors && (item.authors.length > 0) && item.authors.map((author, index) => (
                   <Text key={index}>{author}</Text>
                 ))
               }
@@ -69,9 +83,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  searchBar: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
   bookItem: {
     flex: 1,
     padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
   bookImage: {
     width: 150,
