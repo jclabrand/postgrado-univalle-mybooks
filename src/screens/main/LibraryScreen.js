@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Image, TextInput } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, Image, TextInput, TouchableOpacity } from 'react-native';
 import { Text, Button } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import useBooksApi from '../../hooks/useBooksApi';
 
 export default function LibraryScreen() {
   const { loading, error, data, getAllBooks, searchBooks } = useBooksApi();
   const [searchQuery, setSearchQuery] = useState('');
+  const navigation = useNavigation();
 
   useEffect(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -50,7 +52,10 @@ export default function LibraryScreen() {
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
           renderItem={({ item }) => (
-            <View style={styles.bookItem}>
+            <TouchableOpacity
+              style={styles.bookItem}
+              onPress={() => navigation.navigate('BookScreen', { book: item })}
+            >
               <Image source={{ uri: item.imageLinks.thumbnail }} style={styles.bookImage} />
               <Text style={styles.title}>{item.title}</Text>
               {
@@ -58,7 +63,7 @@ export default function LibraryScreen() {
                   <Text key={index}>{author}</Text>
                 ))
               }
-            </View>
+            </TouchableOpacity>
           )}
         />
       ) : (
