@@ -19,7 +19,7 @@ export default function LoginScreen({ navigation }) {
     
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      login();
+      await login();
     } catch (error) {
       setError('Error al iniciar sesión: ' + error.message);
     } finally {
