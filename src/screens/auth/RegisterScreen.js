@@ -4,8 +4,9 @@ import { Button, Input, Text } from '@rneui/themed';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
-import { auth } from '../../config/firebase';
+import { db, auth } from '../../config/firebase';
 
 export default function RegisterScreen({ navigation }) {
   const [error, setError] = useState('');
@@ -17,7 +18,7 @@ export default function RegisterScreen({ navigation }) {
     
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      navigation.replace('Home');
+      navigation.replace('Login');
     } catch (error) {
       setError('Error al registrarse: ' + error.message);
     } finally {
