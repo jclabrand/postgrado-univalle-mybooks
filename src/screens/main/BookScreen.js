@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, Image, Button, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { doc, collection, query, where, getDocs, getDoc } from 'firebase/firestore';
+import { doc, collection, query, where, getDocs, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 import { db } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
 
 export default function BookScreen({ route }) {
   const { book } = route.params;
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [isInLibrary, setIsInLibrary] = useState(false);
 
   const getBookReviews = async () => {
-    console.log("Usuarios fhrthrthgrtgh:");
     setIsLoading(true);
     try {
       const coleccionRef = collection(db, 'book_reviews');
@@ -29,18 +32,49 @@ export default function BookScreen({ route }) {
         const user = userSnap.data();
         item.user = { displayName: `${user.nombre} ${user.apellido}`};
       }
-      console.log("Usuarios activos:", result);
       setReviews(result);
     } catch (error) {
-      console.error("Error al obtener usuarios:", error);
+      console.error("Error al obtener reseñas:", error);
     } finally {
       setIsLoading(false);
     }
   }
 
-  useEffect(() => {
-    getBookReviews()
-  }, []);
+  const checkIsInLibrary = async () => {
+    const docSnapshot = await getDoc(doc(db, 'libraries', user.uid, 'books', book.id));
+    if (docSnapshot.exists()) {
+      setIsInLibrary(true);
+    } else {
+      setIsInLibrary(false);
+    }
+  }
+
+  const addToLibrary = async () => {
+    try {
+      setIsInLibrary(true);
+      const data = { userId: user.uid, date: new Date().getTime() }
+      await setDoc(doc(db, 'libraries', user.uid, 'books', book.id), data);
+      checkIsInLibrary();
+    } catch (error) {
+      console.error("Error al guardar en la libreria:", error);
+    }
+  }
+  const removeFromLibrary = async () => {
+    try {
+      setIsInLibrary(false);
+      await deleteDoc(doc(db, 'libraries', user.uid, 'books', book.id));
+      checkIsInLibrary();
+    } catch (error) {
+      console.error("Error al eliminar de la libreria:", error);
+    }
+  }
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getBookReviews();
+      checkIsInLibrary();
+    }, [])
+  );
 
   const imageUri =
     book.imageLinks?.thumbnail ||
@@ -59,15 +93,31 @@ export default function BookScreen({ route }) {
       <Text style={styles.title}>{book.title}</Text>
       <Text style={styles.author}>{authors}</Text>
       <Text style={styles.description}>{book.description || 'Sin descripción.'}</Text>
-      <Button
-        title="Agregar reseña"
-        onPress={() =>
-          navigation.navigate('ReviewScreen', {
-            bookId: book.id,
-            bookTitle: book.title,
-          })
+      <View style={styles.headerButtonsRow}>
+        <Button
+          title="Agregar reseña"
+          onPress={() =>
+            navigation.navigate('ReviewScreen', {
+              bookId: book.id,
+              bookTitle: book.title,
+            })
+          }
+        />
+        <View style={{ width: 12 }} />
+        {
+          isInLibrary
+          ? <Button
+            title="Quitar de mi librería"
+            onPress={removeFromLibrary}
+            color="red"
+          />
+          : <Button
+            title="Agregar a mi librería"
+            onPress={addToLibrary}
+            color="#4CAF50"
+          />
         }
-      />
+      </View>
       <Text style={styles.reviewTitle}>Reseñas</Text>
     </View>
   );
@@ -151,6 +201,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'justify',
     marginBottom: 24,
+  },
+  headerButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 8,
+    width: '100%',
   },
   reviewTitle: {
     fontSize: 20,
