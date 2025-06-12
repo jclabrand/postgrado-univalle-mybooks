@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { auth } from '../config/firebase';
 import { db } from '../config/firebase';
@@ -14,13 +14,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const docRef = doc(db, 'usuarios', auth.currentUser.uid);
       const docSnapshot = await getDoc(docRef);
+      let data;
       if (docSnapshot.exists()) {
-        setUser({
-          ...docSnapshot.data(),
-          uid: auth.currentUser.uid,
-        });
-        setIsAuthenticated(true);
+        data = docSnapshot.data();
+      } else {
+        data = { nombre: '', apellido: '' };
+        await setDoc(doc(db, 'usuarios', auth.currentUser.uid), data);
       }
+      setUser({
+        ...data,
+        uid: auth.currentUser.uid,
+      });
+      setIsAuthenticated(true);
     } catch (error) {
       alert('No se pudo cargar el perfil. Inténtalo de nuevo: ' + error.message);
     }
