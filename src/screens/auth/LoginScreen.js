@@ -1,30 +1,19 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Button, Input, Text } from '@rneui/themed';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { auth } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async ({ email, password }) => {
-    setError('');
     setIsLoading(true);
-    
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      await login();
-    } catch (error) {
-      setError('Error al iniciar sesión: ' + error.message);
-    } finally {
-      setIsLoading(false);
-    }
+    await login(email, password);
+    setIsLoading(false);
   };
 
   const validationSchema = Yup.object().shape({
@@ -78,8 +67,6 @@ export default function LoginScreen({ navigation }) {
             type="clear"
             onPress={() => navigation.navigate('Register')}
           />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
       )}
     </Formik>
