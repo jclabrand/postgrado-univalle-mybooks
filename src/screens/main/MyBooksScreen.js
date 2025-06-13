@@ -63,7 +63,7 @@ export default function MyBooksScreen() {
       querySnapshot.forEach((doc) => result.push({ id: doc.id }));
       setBooks(result)
     } catch (error) {
-      console.error("Error al obtener datos de la libreria:", error);
+      alert('Error al obtener datos de la libreria: ' + error.message);
     } finally {
       setIsLoading(false);
     }

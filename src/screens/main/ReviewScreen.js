@@ -12,19 +12,18 @@ export default function ReviewScreen({ route }) {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSendReview = async (values) => {
     setIsSaving(true);
-    setError('');
+
     try {
       const data = { bookId, ...values, date: new Date().getTime() }
       await setDoc(doc(db, 'book_reviews', user.uid), data);
       alert('Reseña enviada');
     } catch (error) {
-        setError('Error al actualizar perfil');
+      alert('Error al guardar reseña: ' + error.message);
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   }
 
@@ -65,8 +64,6 @@ export default function ReviewScreen({ route }) {
           </>
         )}
       </Formik>
-
-      { error ? <Text style={styles.error}>{error}</Text> : null }
 
       <Overlay
         isVisible={isSaving}
