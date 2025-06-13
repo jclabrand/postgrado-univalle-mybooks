@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 import { auth } from '../config/firebase';
 import { db } from '../config/firebase';
@@ -10,7 +11,13 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
-  const login = async () => {
+  const login = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert('Error al iniciar sesión: ' + error.message);
+    }
+
     try {
       const docRef = doc(db, 'usuarios', auth.currentUser.uid);
       const docSnapshot = await getDoc(docRef);
@@ -31,9 +38,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      alert('Error al cerrar sesión: ' + error.message);
+    }
   };
 
   return (
