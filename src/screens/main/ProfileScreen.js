@@ -3,19 +3,20 @@ import { View, StyleSheet, ActivityIndicator, Image, TouchableOpacity } from 're
 import { Input, Text, Button, Overlay } from '@rneui/themed';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
-import { ref, uploadBytes } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { auth } from '../../config/firebase';
 import { db, storage } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState({
-    nombre: '', apellido: ''
+    nombre: '', apellido: '', photo: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [photoBlob, setPhotoBlob] = useState(null);
+  const { logout } = useAuth();
 
   const loadProfile = async () => {
     setIsLoading(true);
@@ -37,15 +38,9 @@ export default function ProfileScreen() {
     setIsSaving(true);
 
     try {
-      if (photoBlob) {
-        const storageRef = ref(storage, `profile_photos/${auth.currentUser.uid}.png`);
-        await uploadBytes(storageRef, photoBlob);
-        //photoURL = await getDownloadURL(storageRef);
-      }
       await setDoc(doc(db, 'usuarios', auth.currentUser.uid), profile);
       alert('Perfil actualizado exitosamente');
     } catch (error) {
-      console.log(error)
       alert('Error al actualizar perfil: ' + error.message);
     } finally {
       setIsSaving(false);
@@ -60,25 +55,28 @@ export default function ProfileScreen() {
       quality: 1,
     });
 
-    const response = await fetch(result.assets[0].uri);
-    setPhotoBlob(await response.blob());
-
-    // if (!result.canceled) {
-    //   setProfile({ ...profile, photo: result.assets[0].base64 });
-    // }
+    if (!result.canceled) {
+      try {
+        const response = await fetch(result.assets[0].uri);
+        const blob  = await response.blob();
+        const storageRef = ref(storage, `profile_photos/${auth.currentUser.uid}`);
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        setProfile({ ...profile, photo: downloadURL });
+      } catch (error) {
+        if (error.code === 'storage/unauthorized') {
+          alert('No tienes permiso para subir imágenes. Verifica tu sesión.');
+        } else {
+          alert('Error al subir la imagen. Por favor, inténtalo de nuevo.');
+        }
+      }
+    }
   };
 
-  const blobToBase64 = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onloadend = () => {
-        resolve(reader.result); // Esto devuelve: data:[tipo];base64,[datos]
-      };
-      
-      reader.onerror = reject;
-      reader.readAsDataURL(blob); // 👈 convierte a base64 tipo data URL
-    });
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    await logout();
+    setIsSigningOut(false);
   };
 
   useEffect(() => {
@@ -90,8 +88,8 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.avatarContainer} onPress={pickImage} disabled={isSaving}>
         <Image
           source={
-            photoBlob
-              ? { uri: `data:image/png;base64,${blobToBase64(photoBlob)}` }
+            profile.photo && profile.photo.length
+              ? { uri: profile.photo }
               : require('../../../assets/favicon.png')
           }
           style={styles.avatar}
@@ -125,6 +123,8 @@ export default function ProfileScreen() {
         title="Cerrar Sesión"
         type="outline"
         containerStyle={styles.button}
+        onPress={handleSignOut}
+        disabled={isSaving || isSigningOut}
       />
 
       <Overlay
@@ -133,6 +133,20 @@ export default function ProfileScreen() {
         backdropStyle={styles.backdrop}>
         <ActivityIndicator size="large" color="#0066cc" />
         <Text style={styles.overlayText}>Guardando cambios...</Text>
+      </Overlay>
+      <Overlay
+        isVisible={isLoading}
+        overlayStyle={styles.overlay}
+        backdropStyle={styles.backdrop}>
+        <ActivityIndicator size="large" color="#0066cc" />
+        <Text style={styles.overlayText}>Cargando perfil...</Text>
+      </Overlay>
+      <Overlay
+        isVisible={isSigningOut}
+        overlayStyle={styles.overlay}
+        backdropStyle={styles.backdrop}>
+        <ActivityIndicator size="large" color="#0066cc" />
+        <Text style={styles.overlayText}>Cerrando sesión...</Text>
       </Overlay>
     </View>
   );
