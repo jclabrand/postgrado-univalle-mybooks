@@ -30,11 +30,11 @@ export default function BookScreen({ route }) {
         const docRef = doc(db, 'usuarios', item.id);
         const userSnap = await getDoc(docRef);
         const user = userSnap.data();
-        item.user = { displayName: `${user.nombre} ${user.apellido}`};
+        item.user = { displayName: `${user.nombre} ${user.apellido}`, photo: user.photo};
       }
       setReviews(result);
     } catch (error) {
-      console.error("Error al obtener reseñas:", error);
+      alert('Error al obtener reseñas: ' + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +56,7 @@ export default function BookScreen({ route }) {
       await setDoc(doc(db, 'libraries', user.uid, 'books', book.id), data);
       checkIsInLibrary();
     } catch (error) {
-      console.error("Error al guardar en la libreria:", error);
+      alert('Error al guardar en la libreria: ' + error.message);
     }
   }
   const removeFromLibrary = async () => {
@@ -65,7 +65,7 @@ export default function BookScreen({ route }) {
       await deleteDoc(doc(db, 'libraries', user.uid, 'books', book.id));
       checkIsInLibrary();
     } catch (error) {
-      console.error("Error al eliminar de la libreria:", error);
+      alert('Error al eliminar de la libreria: ' + error.message);
     }
   }
 
@@ -131,7 +131,7 @@ export default function BookScreen({ route }) {
         <View style={styles.reviewItem}>
           <View style={styles.userRow}>
             <Image
-              source={{ uri: item.user?.photoURL || 'https://ui-avatars.com/api/?name=U' }}
+              source={{ uri: item.user?.photo || 'https://ui-avatars.com/api/?name=U' }}
               style={styles.profileImage}
             />
             <Text style={styles.reviewUser}>
