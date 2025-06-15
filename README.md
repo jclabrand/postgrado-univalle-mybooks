@@ -1,4 +1,4 @@
-# BookRev
+# MyBooks
 
 MyBooks es una aplicación móvil desarrollada con **React Native** que permite a los usuarios buscar libros, agregarlos a su biblioteca personal, escribir reseñas y calificar libros con estrellas. Utiliza **Firebase** (Firestore, Auth y Storage) como backend y soporta tanto el uso en la nube como con emuladores locales para desarrollo.
 
