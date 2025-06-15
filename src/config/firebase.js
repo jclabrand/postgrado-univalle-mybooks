@@ -5,12 +5,6 @@ import { getStorage, connectStorageEmulator } from 'firebase/storage'; // <-- Im
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBLW7tzr03dg5wtOXkuwuvVHEQrcLd9N8A",
-  authDomain: "bookrev24.firebaseapp.com",
-  projectId: "bookrev24",
-  storageBucket: "bookrev24.appspot.com",
-  messagingSenderId: "1036110369361",
-  appId: "1:1036110369361:web:69b2b36e6edc16a7709e70"
 };
 const localEmulatorIp = '192.168.100.6';
 
